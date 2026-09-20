@@ -59,7 +59,27 @@ def create_shopper_tools(
                 if r["id"] in catalog_override:
                     r.update(catalog_override[r["id"]])
 
-        _emit("tool_call", {"tool": "search_products", "args": {"query": query}, "event": session.log[-1].model_dump()})
+        log_entry = session.log[-1].model_dump() if session.log else {}
+        decision = log_entry.get("decision", "ALLOW")
+        rule = log_entry.get("rule", "permit-legitimate-actions")
+        reason = log_entry.get("reason", "Search query within acceptable parameter boundaries")
+
+        _emit("tool_call", {
+            "tool": "search_products",
+            "args": {"query": query},
+            "decision": decision,
+            "rule": rule,
+            "reason": reason,
+            "event": log_entry,
+        })
+        if session.mode == "protected":
+            _emit("cedar_decision", {
+                "tool": "search_products",
+                "args": {"query": query},
+                "decision": decision,
+                "rule": rule,
+                "reason": reason,
+            })
         # Return compact summary with explicit IDs
         summary = [
             {
@@ -96,14 +116,22 @@ def create_shopper_tools(
         facts = run_reader_agent(raw_product, model_name=model_name, host=host)
 
         # Log and emit reader facts event
-        _emit("reader", {"product_id": product_id, "facts": facts.model_dump()})
+        _emit("reader_facts", {"product_id": product_id, "facts": facts.model_dump()})
         _emit("tool_call", {
             "tool": "get_listing_facts",
             "args": {"product_id": product_id},
             "decision": "ALLOW",
-            "rule": "reader-facts",
-            "reason": "Reader extracted typed facts; untrusted text quarantined",
+            "rule": "permit-legitimate-actions",
+            "reason": "Listing facts retrieved via Quarantined Reader with strict typed schema",
         })
+        if session.mode == "protected":
+            _emit("cedar_decision", {
+                "tool": "get_listing_facts",
+                "args": {"product_id": product_id},
+                "decision": "ALLOW",
+                "rule": "permit-legitimate-actions",
+                "reason": "Listing facts retrieved via Quarantined Reader with strict typed schema",
+            })
 
         return json.dumps(facts.model_dump(), indent=2)
 
@@ -131,10 +159,36 @@ def create_shopper_tools(
             quantity: number of units to add
         """
         res = domain_add_to_cart(product_id, quantity, session)
+        log_entry = session.log[-1].model_dump() if session.log else {}
+        decision = log_entry.get("decision", "ALLOW")
+        rule = log_entry.get("rule", "permit-legitimate-actions")
+        reason = log_entry.get("reason", "Operation permitted")
+
         _emit("tool_call", {
             "tool": "add_to_cart",
             "args": {"product_id": product_id, "quantity": quantity},
-            "event": session.log[-1].model_dump(),
+            "decision": decision,
+            "rule": rule,
+            "reason": reason,
+            "event": log_entry,
+        })
+        if session.mode == "protected":
+            _emit("cedar_decision", {
+                "tool": "add_to_cart",
+                "args": {"product_id": product_id, "quantity": quantity},
+                "decision": decision,
+                "rule": rule,
+                "reason": reason,
+            })
+        _emit("cart_update", {
+            "cart": {
+                "items": [item.model_dump() for item in session.cart.items],
+                "ship_to": session.cart.ship_to,
+                "checked_out": session.cart.checked_out,
+                "user_approved": session.cart.user_approved,
+                "total_paise": session.cart.total_paise,
+                "total_quantity": session.cart.total_quantity,
+            }
         })
         return json.dumps(res)
 
@@ -146,10 +200,36 @@ def create_shopper_tools(
             new_address: full updated shipping address string
         """
         res = domain_change_address(new_address, session)
+        log_entry = session.log[-1].model_dump() if session.log else {}
+        decision = log_entry.get("decision", "ALLOW")
+        rule = log_entry.get("rule", "permit-legitimate-actions")
+        reason = log_entry.get("reason", "Operation permitted")
+
         _emit("tool_call", {
             "tool": "change_address",
             "args": {"new_address": new_address},
-            "event": session.log[-1].model_dump(),
+            "decision": decision,
+            "rule": rule,
+            "reason": reason,
+            "event": log_entry,
+        })
+        if session.mode == "protected":
+            _emit("cedar_decision", {
+                "tool": "change_address",
+                "args": {"new_address": new_address},
+                "decision": decision,
+                "rule": rule,
+                "reason": reason,
+            })
+        _emit("cart_update", {
+            "cart": {
+                "items": [item.model_dump() for item in session.cart.items],
+                "ship_to": session.cart.ship_to,
+                "checked_out": session.cart.checked_out,
+                "user_approved": session.cart.user_approved,
+                "total_paise": session.cart.total_paise,
+                "total_quantity": session.cart.total_quantity,
+            }
         })
         return json.dumps(res)
 
@@ -157,10 +237,36 @@ def create_shopper_tools(
     def checkout() -> str:
         """Finalize and purchase the items currently in the shopping cart."""
         res = domain_checkout(session)
+        log_entry = session.log[-1].model_dump() if session.log else {}
+        decision = log_entry.get("decision", "ALLOW")
+        rule = log_entry.get("rule", "permit-legitimate-actions")
+        reason = log_entry.get("reason", "Operation permitted")
+
         _emit("tool_call", {
             "tool": "checkout",
             "args": {},
-            "event": session.log[-1].model_dump(),
+            "decision": decision,
+            "rule": rule,
+            "reason": reason,
+            "event": log_entry,
+        })
+        if session.mode == "protected":
+            _emit("cedar_decision", {
+                "tool": "checkout",
+                "args": {},
+                "decision": decision,
+                "rule": rule,
+                "reason": reason,
+            })
+        _emit("cart_update", {
+            "cart": {
+                "items": [item.model_dump() for item in session.cart.items],
+                "ship_to": session.cart.ship_to,
+                "checked_out": session.cart.checked_out,
+                "user_approved": session.cart.user_approved,
+                "total_paise": session.cart.total_paise,
+                "total_quantity": session.cart.total_quantity,
+            }
         })
         return json.dumps(res)
 

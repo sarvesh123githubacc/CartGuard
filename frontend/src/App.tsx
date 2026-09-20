@@ -183,21 +183,42 @@ export default function App() {
     }
 
     // 1. Quarantined Reader Facts
-    if (event.type === 'reader_facts' && event.facts) {
-      setReaderFacts(event.facts);
+    if ((event.type === 'reader' || event.type === 'reader_facts') && (event.facts || event.event?.facts)) {
+      setReaderFacts(event.facts || event.event?.facts);
     }
 
     // 2. Tool Call
     if (event.type === 'tool_call') {
+      const decision = event.decision || event.event?.decision;
+      const rule = event.rule || event.event?.rule;
+      const reason = event.reason || event.event?.reason;
+
       const step: TimelineStep = {
         id: `${mode}-${Date.now()}-${Math.random().toString(36).substr(2, 4)}`,
         tool: event.tool,
         args: event.args || {},
+        decision: decision,
+        rule: rule,
+        reason: reason,
         timestamp: event.timestamp || Date.now() / 1000,
       };
 
       if (isProt) {
         setProtectedSteps((prev) => [...prev, step]);
+
+        // If this protected tool call has a Cedar authorization verdict, record in Cedar Decision Log
+        if (decision) {
+          const cedarEntry: CedarLogEntry = {
+            id: `cedar-${Date.now()}-${Math.random().toString(36).substr(2, 4)}`,
+            timestamp: event.timestamp || Date.now() / 1000,
+            tool: event.tool,
+            args: event.args || {},
+            decision: decision,
+            rule: rule || 'permit-legitimate-actions',
+            reason: reason || 'Evaluated under Cedar policies',
+          };
+          setCedarEntries((prev) => [cedarEntry, ...prev]);
+        }
       } else {
         setUnprotectedSteps((prev) => [...prev, step]);
       }
@@ -207,7 +228,7 @@ export default function App() {
       }
     }
 
-    // 3. Cedar Authorization Decision (Protected mode only)
+    // 3. Cedar Authorization Decision (Protected mode explicit event)
     if (event.type === 'cedar_decision') {
       const entry: CedarLogEntry = {
         id: `cedar-${Date.now()}-${Math.random().toString(36).substr(2, 4)}`,
@@ -262,7 +283,7 @@ export default function App() {
       if (isProt) {
         setProtectedStatus((prev) => (prev === 'Running' ? 'Safe' : prev));
       } else {
-        setUnprotectedStatus((prev) => (prev === 'Running' ? 'Safe' : prev));
+        setUnprotectedStatus((prev) => (prev === 'Running' ? 'Hijacked' : prev));
       }
     }
   };

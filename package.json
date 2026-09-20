@@ -10,5 +10,8 @@
     "test:cedar": "powershell -ExecutionPolicy Bypass -File ./scripts/run_tests.ps1 cedar",
     "test:strands": "powershell -ExecutionPolicy Bypass -File ./scripts/run_tests.ps1 strands",
     "test": "powershell -ExecutionPolicy Bypass -File ./scripts/run_tests.ps1 all"
+  },
+  "devDependencies": {
+    "playwright": "^1.63.0"
   }
 }

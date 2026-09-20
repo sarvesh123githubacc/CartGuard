@@ -9,13 +9,16 @@ interface CedarLogProps {
 
 export const CedarLog: React.FC<CedarLogProps> = ({ entries, onSelectRow }) => {
   const formatTime = (ts: number) => {
-    const d = new Date(ts * 1000);
-    return d.toLocaleTimeString('en-US', {
-      hour12: false,
-      hour: '2-digit',
-      minute: '2-digit',
-      second: '2-digit',
-    });
+    const millis = ts > 1e11 ? ts : ts * 1000;
+    const d = new Date(millis);
+    return isNaN(d.getTime())
+      ? '00:00:00'
+      : d.toLocaleTimeString('en-US', {
+          hour12: false,
+          hour: '2-digit',
+          minute: '2-digit',
+          second: '2-digit',
+        });
   };
 
   return (
