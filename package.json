@@ -1,0 +1,14 @@
+{
+  "name": "cartguard",
+  "version": "0.1.0",
+  "private": true,
+  "description": "CartGuard: Security layer for AI shopping agents against indirect prompt injection",
+  "scripts": {
+    "dev": "node scripts/start-dev.js",
+    "dev:backend": "powershell -ExecutionPolicy Bypass -File ./scripts/start_backend.ps1",
+    "dev:frontend": "npm --prefix frontend run dev",
+    "test:cedar": "powershell -ExecutionPolicy Bypass -File ./scripts/run_tests.ps1 cedar",
+    "test:strands": "powershell -ExecutionPolicy Bypass -File ./scripts/run_tests.ps1 strands",
+    "test": "powershell -ExecutionPolicy Bypass -File ./scripts/run_tests.ps1 all"
+  }
+}
