@@ -1,8 +1,10 @@
 import json
 import os
+from pathlib import Path
 from typing import Any, Dict, Optional
 from fastapi import FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 from sse_starlette.sse import EventSourceResponse
 
@@ -36,6 +38,7 @@ class RunRequest(BaseModel):
     attack_id: str
     mode: str = "protected"  # "protected" | "unprotected" | "replay"
     session_id: Optional[str] = None
+    replay: bool = False
 
 
 class ApproveRequest(BaseModel):
@@ -62,14 +65,33 @@ def get_attacks():
     return load_attacks()
 
 
+@app.get("/api/run")
+async def get_run(attack_id: str, mode: str = "protected", replay: bool = False):
+    """GET endpoint for EventSource browser compatibility."""
+    actual_mode = f"replay_{mode}" if replay and not mode.startswith("replay") else mode
+
+    async def event_generator():
+        async for event in run_scenario_stream(
+            attack_id=attack_id,
+            mode=actual_mode,
+        ):
+            yield {
+                "event": "message",
+                "data": json.dumps(event),
+            }
+
+    return EventSourceResponse(event_generator())
+
+
 @app.post("/api/run")
 async def post_run(req: RunRequest):
     """Run an individual scenario and stream events via SSE."""
+    actual_mode = f"replay_{req.mode}" if req.replay and not req.mode.startswith("replay") else req.mode
 
     async def event_generator():
         async for event in run_scenario_stream(
             attack_id=req.attack_id,
-            mode=req.mode,
+            mode=actual_mode,
             session_id=req.session_id,
         ):
             yield {
@@ -80,20 +102,28 @@ async def post_run(req: RunRequest):
     return EventSourceResponse(event_generator())
 
 
+class RunAllRequest(BaseModel):
+    replay: bool = False
+
+
 @app.post("/api/run-all")
-async def post_run_all():
+async def post_run_all(req: Optional[RunAllRequest] = None):
     """Run all 10 attacks across both modes (unprotected and protected), streaming per-attack results."""
+    replay = req.replay if req else False
     attacks = load_attacks()
 
     async def run_all_generator():
         for atk in attacks:
             atk_id = atk["id"]
+            unprot_mode = "replay_unprotected" if replay else "unprotected"
+            prot_mode = "replay_protected" if replay else "protected"
+
             # 1. Unprotected run
             yield {
                 "event": "status",
                 "data": json.dumps({"status": "starting", "attack_id": atk_id, "mode": "unprotected"}),
             }
-            async for ev in run_scenario_stream(attack_id=atk_id, mode="unprotected"):
+            async for ev in run_scenario_stream(attack_id=atk_id, mode=unprot_mode):
                 yield {"event": "message", "data": json.dumps(ev)}
 
             # 2. Protected run
@@ -101,7 +131,7 @@ async def post_run_all():
                 "event": "status",
                 "data": json.dumps({"status": "starting", "attack_id": atk_id, "mode": "protected"}),
             }
-            async for ev in run_scenario_stream(attack_id=atk_id, mode="protected"):
+            async for ev in run_scenario_stream(attack_id=atk_id, mode=prot_mode):
                 yield {"event": "message", "data": json.dumps(ev)}
 
         yield {
@@ -143,3 +173,9 @@ def post_approve(req: ApproveRequest = ApproveRequest()):
 def post_stress():
     """Run 200 adversarial calls directly through Cedar authorization and return report."""
     return run_stress_test(200)
+
+
+FRONTEND_DIST = Path(__file__).resolve().parent.parent.parent / "frontend" / "dist"
+if FRONTEND_DIST.exists():
+    app.mount("/", StaticFiles(directory=str(FRONTEND_DIST), html=True), name="frontend")
+
