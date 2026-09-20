@@ -258,7 +258,7 @@ export default function App() {
     }
 
     // 4. Cart Update
-    if (event.type === 'cart_update' && event.cart) {
+    if ((event.type === 'cart_update' || event.type === 'final_cart') && event.cart) {
       if (isProt) {
         setProtectedCart(event.cart);
       } else {
