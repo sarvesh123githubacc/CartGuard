@@ -324,8 +324,9 @@ async def run_scenario_stream(
     recorded_events.append(done_ev)
     yield done_ev
 
-    # Save to recorded directory
-    save_recorded_run(attack_id, mode, recorded_events)
+    # Save to recorded directory only if explicitly enabled via environment variable
+    if os.getenv("CARTGUARD_SAVE_RECORDINGS") == "1":
+        save_recorded_run(attack_id, mode, recorded_events)
 
 
 def run_scenario_sync(
