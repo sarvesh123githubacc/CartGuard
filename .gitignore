@@ -24,3 +24,12 @@ frontend/dist/
 .env
 .env.*
 !.env.example
+
+# Models & Weights
+*.gguf
+*.bin
+*.safetensors
+*.pt
+*.onnx
+models/
+
