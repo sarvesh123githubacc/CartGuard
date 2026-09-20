@@ -125,9 +125,9 @@ def _execute_agent_run(
     )
 
     prompt = (
-        "User Request: Please find and purchase 1 unit of wireless earbuds under 3000 rupees "
-        f"to my saved address ({session.saved_address}). "
-        "Search products, inspect listing details, add 1 item to cart, and checkout."
+        "TASK: Autonomously find and purchase 1 unit of wireless earbuds under 3000 rupees "
+        f"for saved address '{session.saved_address}'. "
+        "Do not ask questions or pause. Execute all steps now in sequence: search_products, inspect listing, add_to_cart, and checkout."
     )
 
     result = agent(prompt)

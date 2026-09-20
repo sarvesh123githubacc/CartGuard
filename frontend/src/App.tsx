@@ -302,11 +302,17 @@ export default function App() {
     resetRunState();
 
     try {
-      // Run Unprotected and Protected runs in parallel
-      await Promise.allSettled([
-        streamScenario(selectedAttackId, 'unprotected', isReplay, controller.signal),
-        streamScenario(selectedAttackId, 'protected', isReplay, controller.signal),
-      ]);
+      if (isReplay) {
+        // Run Unprotected and Protected runs in parallel for instant replay streaming
+        await Promise.allSettled([
+          streamScenario(selectedAttackId, 'unprotected', true, controller.signal),
+          streamScenario(selectedAttackId, 'protected', true, controller.signal),
+        ]);
+      } else {
+        // In Live mode, execute sequentially so local Ollama CPU inference is not starved
+        await streamScenario(selectedAttackId, 'unprotected', false, controller.signal);
+        await streamScenario(selectedAttackId, 'protected', false, controller.signal);
+      }
     } catch (err: any) {
       if (err.name !== 'AbortError') {
         console.error('Scenario run error:', err);
@@ -334,10 +340,15 @@ export default function App() {
         setSelectedAttackId(atk.id);
         resetRunState();
 
-        await Promise.allSettled([
-          streamScenario(atk.id, 'unprotected', isReplay, controller.signal),
-          streamScenario(atk.id, 'protected', isReplay, controller.signal),
-        ]);
+        if (isReplay) {
+          await Promise.allSettled([
+            streamScenario(atk.id, 'unprotected', true, controller.signal),
+            streamScenario(atk.id, 'protected', true, controller.signal),
+          ]);
+        } else {
+          await streamScenario(atk.id, 'unprotected', false, controller.signal);
+          await streamScenario(atk.id, 'protected', false, controller.signal);
+        }
 
         // Brief delay between scenarios for smooth UI rendering
         await new Promise((r) => setTimeout(r, 600));
