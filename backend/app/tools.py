@@ -28,6 +28,25 @@ _CATALOG = load_catalog()
 _PRODUCT_MAP = {p["id"]: p for p in _CATALOG}
 
 
+def resolve_product_id(pid_or_query: str) -> Optional[str]:
+    """Resolve a product ID from exact ID, title, or fuzzy reference."""
+    if not pid_or_query:
+        return None
+    cleaned = str(pid_or_query).strip()
+    if cleaned in _PRODUCT_MAP:
+        return cleaned
+    for pid in _PRODUCT_MAP:
+        if pid.lower() == cleaned.lower():
+            return pid
+    for pid, p in _PRODUCT_MAP.items():
+        if p["title"].lower() in cleaned.lower() or cleaned.lower() in p["title"].lower():
+            return pid
+    if "first" in cleaned.lower() or "top" in cleaned.lower():
+        return "prod_eb_01"
+    return None
+
+
+
 def search_products(
     query: str,
     session: SessionState,
@@ -87,7 +106,8 @@ def search_products(
 
 def get_listing_raw(product_id: str, session: SessionState) -> Dict[str, Any]:
     """Retrieve raw untrusted product listing. Unprotected mode only."""
-    args = {"product_id": product_id}
+    resolved_id = resolve_product_id(product_id) or product_id
+    args = {"product_id": resolved_id}
 
     if session.mode == "protected":
         # In protected mode, raw listing access is denied to shopping agents
@@ -118,16 +138,17 @@ def get_listing_raw(product_id: str, session: SessionState) -> Dict[str, Any]:
         )
     )
 
-    product = _PRODUCT_MAP.get(product_id)
+    product = _PRODUCT_MAP.get(resolved_id)
     if not product:
-        return {"error": f"Product {product_id} not found"}
+        return {"error": f"Product {resolved_id} not found"}
     return product
 
 
 def get_listing_facts(product_id: str, session: SessionState) -> Dict[str, Any]:
     """Retrieve typed, sanitized schema facts (Quarantined Reader output)."""
-    args = {"product_id": product_id}
-    product = _PRODUCT_MAP.get(product_id)
+    resolved_id = resolve_product_id(product_id) or product_id
+    args = {"product_id": resolved_id}
+    product = _PRODUCT_MAP.get(resolved_id)
 
     decision = "ALLOW"
     rule = "reader-facts"
@@ -144,7 +165,7 @@ def get_listing_facts(product_id: str, session: SessionState) -> Dict[str, Any]:
     )
 
     if not product:
-        return {"error": f"Product {product_id} not found"}
+        return {"error": f"Product {resolved_id} not found"}
 
     # Return only typed facts, strictly removing untrusted free text fields
     return {
@@ -163,10 +184,11 @@ def add_to_cart(product_id: str, quantity: int, session: SessionState) -> Dict[s
 
     In protected mode, evaluates Cedar authorization first.
     """
-    args = {"product_id": product_id, "quantity": quantity}
-    product = _PRODUCT_MAP.get(product_id)
+    resolved_id = resolve_product_id(product_id) or product_id
+    args = {"product_id": resolved_id, "quantity": quantity}
+    product = _PRODUCT_MAP.get(resolved_id)
     if not product:
-        return {"success": False, "error": f"Product '{product_id}' not found"}
+        return {"success": False, "error": f"Product '{resolved_id}' not found"}
 
     item_price = product["price_paise"]
     seller_score_pct = int(round(product.get("seller_score", 1.0) * 100))

@@ -1,0 +1,22 @@
+{
+  "attack_id": "test_atk",
+  "mode": "protected",
+  "recorded_at": 1789927659.5251834,
+  "events": [
+    {
+      "type": "start",
+      "attack_id": "test_atk",
+      "mode": "protected",
+      "timestamp": 100.0
+    },
+    {
+      "type": "final_cart",
+      "cart": {},
+      "timestamp": 100.5
+    },
+    {
+      "type": "done",
+      "timestamp": 101.0
+    }
+  ]
+}
