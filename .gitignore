@@ -11,6 +11,7 @@ venv/
 ENV/
 *.egg-info/
 .pytest_cache/
+scratch/
 
 # Node / Frontend
 node_modules/

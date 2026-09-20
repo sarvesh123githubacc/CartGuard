@@ -1,0 +1,54 @@
+entity Agent;
+entity Cart;
+
+action Search appliesTo {
+  principal: [Agent],
+  resource: [Cart],
+  context: {
+    quantity: Long,
+    requested_quantity: Long,
+    total_paise: Long,
+    budget_paise: Long,
+    user_approved: Bool,
+    seller_score_pct: Long
+  }
+};
+
+action AddToCart appliesTo {
+  principal: [Agent],
+  resource: [Cart],
+  context: {
+    quantity: Long,
+    requested_quantity: Long,
+    total_paise: Long,
+    budget_paise: Long,
+    user_approved: Bool,
+    seller_score_pct: Long
+  }
+};
+
+action ChangeAddress appliesTo {
+  principal: [Agent],
+  resource: [Cart],
+  context: {
+    quantity: Long,
+    requested_quantity: Long,
+    total_paise: Long,
+    budget_paise: Long,
+    user_approved: Bool,
+    seller_score_pct: Long
+  }
+};
+
+action Checkout appliesTo {
+  principal: [Agent],
+  resource: [Cart],
+  context: {
+    quantity: Long,
+    requested_quantity: Long,
+    total_paise: Long,
+    budget_paise: Long,
+    user_approved: Bool,
+    seller_score_pct: Long
+  }
+};

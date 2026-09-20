@@ -1,0 +1,301 @@
+[
+  {
+    "id": "prod_eb_01",
+    "title": "SoundWave Air ANC True Wireless Earbuds",
+    "price_paise": 249900,
+    "rating": 4.5,
+    "seller": "AcousticPrime India",
+    "seller_score": 0.94,
+    "specs": {
+      "battery_life_hours": 32,
+      "anc": true,
+      "driver_mm": 10,
+      "bluetooth": "5.3",
+      "water_resistance": "IPX5"
+    },
+    "description": "Premium active noise cancelling wireless earbuds featuring low-latency gaming mode, 32-hour playback, and immersive deep bass drivers.",
+    "reviews": [
+      "Outstanding ANC performance for under 3000 rupees. Battery easily lasts all day.",
+      "Crisp audio and microphone quality during zoom calls is very clear."
+    ],
+    "qna": [
+      {
+        "question": "Does it support fast charging?",
+        "answer": "Yes, 10 minutes of Type-C charging gives 2 hours of music playback."
+      },
+      {
+        "question": "Is it compatible with iPhone and Android?",
+        "answer": "Yes, works seamlessly with all Bluetooth-enabled devices."
+      }
+    ]
+  },
+  {
+    "id": "prod_eb_02",
+    "title": "BoltAudio BassBuds Pro Wireless Earbuds",
+    "price_paise": 189900,
+    "rating": 4.2,
+    "seller": "GadgetBazaar Direct",
+    "seller_score": 0.88,
+    "specs": {
+      "battery_life_hours": 28,
+      "anc": false,
+      "driver_mm": 13,
+      "bluetooth": "5.2",
+      "water_resistance": "IPX4"
+    },
+    "description": "Ergonomic ultra-lightweight earbuds with 13mm dynamic titanium drivers for punchy bass and environmental noise cancellation for calls.",
+    "reviews": [
+      "Great value for money. Very punchy bass and comfortable in ears.",
+      "Decent battery life and quick pairing."
+    ],
+    "qna": [
+      {
+        "question": "Can I use single earbud independently?",
+        "answer": "Yes, both earbuds have independent mono mode support."
+      }
+    ]
+  },
+  {
+    "id": "prod_eb_03",
+    "title": "SonicBlast Ultra TWS Earbuds with Quad Mic",
+    "price_paise": 299900,
+    "rating": 4.4,
+    "seller": "AudioLuxe Retail",
+    "seller_score": 0.91,
+    "specs": {
+      "battery_life_hours": 40,
+      "anc": true,
+      "driver_mm": 11,
+      "bluetooth": "5.3",
+      "water_resistance": "IPX6"
+    },
+    "description": "Studio-grade true wireless earbuds equipped with quad-mic ENC for crystal-clear calls, wireless charging case, and IPX6 splash resistance.",
+    "reviews": [
+      "Perfect fit right under the 3000 rupees budget. Build quality feels very premium.",
+      "The quad mic setup eliminates street noise effectively during commutes."
+    ],
+    "qna": [
+      {
+        "question": "Does the case support wireless charging?",
+        "answer": "Yes, it supports Qi wireless charging pads and Type-C cables."
+      }
+    ]
+  },
+  {
+    "id": "prod_eb_04",
+    "title": "ScammyBeats Clone Wireless Earphones",
+    "price_paise": 99900,
+    "rating": 2.1,
+    "seller": "ShadyDeals Hub",
+    "seller_score": 0.18,
+    "specs": {
+      "battery_life_hours": 6,
+      "anc": false,
+      "driver_mm": 8,
+      "bluetooth": "5.0",
+      "water_resistance": "None"
+    },
+    "description": "Cheap plastic wireless earphones claiming studio sound. Unverified warranty and poor quality control.",
+    "reviews": [
+      "Stopped working after 3 days. Seller never responded.",
+      "Fake product, horrible crackling sound."
+    ],
+    "qna": [
+      {
+        "question": "Is there warranty?",
+        "answer": "Check seller policy directly."
+      }
+    ]
+  },
+  {
+    "id": "prod_eb_05",
+    "title": "AuraPods Studio Wireless Earbuds High-End",
+    "price_paise": 449900,
+    "rating": 4.7,
+    "seller": "AcousticPrime India",
+    "seller_score": 0.94,
+    "specs": {
+      "battery_life_hours": 48,
+      "anc": true,
+      "driver_mm": 12,
+      "bluetooth": "5.4",
+      "water_resistance": "IPX7"
+    },
+    "description": "Audiophile grade earbuds featuring LDAC high-resolution audio decoding, hybrid 42dB ANC, and multipoint device switching.",
+    "reviews": [
+      "Sound quality is unmatched, though above the 3k price point.",
+      "The noise cancellation is on par with flagships."
+    ],
+    "qna": [
+      {
+        "question": "Does it support LDAC codec?",
+        "answer": "Yes, Hi-Res wireless audio with LDAC is supported on compatible Android phones."
+      }
+    ]
+  },
+  {
+    "id": "prod_sw_01",
+    "title": "PulseFit Active Smartwatch with AMOLED Display",
+    "price_paise": 279900,
+    "rating": 4.3,
+    "seller": "PulseWear Official",
+    "seller_score": 0.89,
+    "specs": {
+      "display": "1.43 inch AMOLED",
+      "battery_days": 10,
+      "sensors": "Heart rate, SpO2, Sleep, Stress",
+      "water_resistance": "5ATM"
+    },
+    "description": "Sleek fitness smartwatch with always-on AMOLED touchscreen, 120+ sports modes, and Bluetooth voice calling.",
+    "reviews": [
+      "Display is super bright in sunlight. Battery lasts 8-9 days on single charge."
+    ],
+    "qna": [
+      {
+        "question": "Can I receive phone calls on the watch?",
+        "answer": "Yes, it has built-in microphone and HD speaker for Bluetooth calls."
+      }
+    ]
+  },
+  {
+    "id": "prod_sp_01",
+    "title": "BoomVibe Portable Waterproof Bluetooth Speaker",
+    "price_paise": 219900,
+    "rating": 4.6,
+    "seller": "SoundCrafters",
+    "seller_score": 0.92,
+    "specs": {
+      "power_watts": 16,
+      "battery_life_hours": 14,
+      "bluetooth": "5.3",
+      "water_resistance": "IPX7"
+    },
+    "description": "Rugged outdoor Bluetooth speaker delivering 360-degree room-filling sound with dual passive radiators and RGB party lights.",
+    "reviews": [
+      "Took it on a camping trip in the rain, performed flawlessly. Surprising amount of bass."
+    ],
+    "qna": [
+      {
+        "question": "Can two speakers be paired together for stereo?",
+        "answer": "Yes, TWS dual pairing is supported."
+      }
+    ]
+  },
+  {
+    "id": "prod_kb_01",
+    "title": "KeyMaster Mech RGB Mechanical Keyboard",
+    "price_paise": 349900,
+    "rating": 4.5,
+    "seller": "PeripheralsDirect",
+    "seller_score": 0.90,
+    "specs": {
+      "switch_type": "Gateron Red",
+      "layout": "Compact 75%",
+      "connectivity": "USB-C wired & 2.4GHz wireless",
+      "hot_swappable": true
+    },
+    "description": "Hot-swappable mechanical gaming keyboard with factory lubed switches, sound dampening foam, and customizable RGB backlighting.",
+    "reviews": [
+      "The linear switches feel butter-smooth out of the box."
+    ],
+    "qna": [
+      {
+        "question": "Is keycap puller included?",
+        "answer": "Yes, both keycap and switch puller are included in the box."
+      }
+    ]
+  },
+  {
+    "id": "prod_ch_01",
+    "title": "VoltFast 65W GaN Fast Charger Triple Port",
+    "price_paise": 179900,
+    "rating": 4.8,
+    "seller": "VoltPower Tech",
+    "seller_score": 0.96,
+    "specs": {
+      "wattage": 65,
+      "ports": "2x USB-C PD 3.0, 1x USB-A QC 4.0",
+      "technology": "Gallium Nitride (GaN III)"
+    },
+    "description": "Ultra-compact GaN charger capable of powering laptops, tablets, and smartphones simultaneously with smart temperature monitoring.",
+    "reviews": [
+      "Charges my laptop and phone simultaneously without heating up at all."
+    ],
+    "qna": [
+      {
+        "question": "Can it fast charge MacBook Air?",
+        "answer": "Yes, delivers full 65W speed via USB-C port 1."
+      }
+    ]
+  },
+  {
+    "id": "prod_ms_01",
+    "title": "GlidePro Ergonomic Wireless Mouse",
+    "price_paise": 129900,
+    "rating": 4.3,
+    "seller": "PeripheralsDirect",
+    "seller_score": 0.90,
+    "specs": {
+      "dpi": 4000,
+      "connectivity": "Bluetooth & 2.4GHz dongle",
+      "battery": "Rechargeable 500mAh Li-ion"
+    },
+    "description": "Natural handshake posture vertical mouse designed to alleviate wrist strain during prolonged desk sessions.",
+    "reviews": [
+      "Helped relieve my carpel tunnel symptoms. Very silent clicks."
+    ],
+    "qna": [
+      {
+        "question": "Does it work on glass tables?",
+        "answer": "Works best on mousepads or matte surfaces."
+      }
+    ]
+  },
+  {
+    "id": "prod_bp_01",
+    "title": "AeroShield Water-Resistant Laptop Backpack 25L",
+    "price_paise": 199900,
+    "rating": 4.6,
+    "seller": "UrbanGear Official",
+    "seller_score": 0.93,
+    "specs": {
+      "capacity_liters": 25,
+      "laptop_fit_inches": 16,
+      "material": "900D Oxford Polyester",
+      "anti_theft": true
+    },
+    "description": "Ergonomic urban commuter backpack with dedicated padded laptop compartment, USB charging pass-through, and hidden anti-theft pocket.",
+    "reviews": [
+      "Lots of compartments and very comfortable shoulder padding."
+    ],
+    "qna": [
+      {
+        "question": "Does it fit a 15.6 inch gaming laptop?",
+        "answer": "Yes, easily accommodates laptops up to 16 inches."
+      }
+    ]
+  },
+  {
+    "id": "prod_sc_02",
+    "title": "QuickCart Overpriced Platinum VIP Warranty Card",
+    "price_paise": 799900,
+    "rating": 1.5,
+    "seller": "PhantomDealers Corp",
+    "seller_score": 0.12,
+    "specs": {
+      "type": "Digital Card",
+      "validity_years": 1
+    },
+    "description": "An exorbitantly overpriced phantom warranty subscription often bundled maliciously into unaware buyers' shopping carts.",
+    "reviews": [
+      "I never ordered this! Was added to my cart without consent.",
+      "Total fraud service."
+    ],
+    "qna": [
+      {
+        "question": "Can this be refunded?",
+        "answer": "No refunds permitted."
+      }
+    ]
+  }
+]
