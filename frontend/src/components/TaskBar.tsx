@@ -8,8 +8,9 @@ import {
   Play,
   FastForward,
   Keyboard,
+  Bot,
 } from 'lucide-react';
-import { Attack, AttackVector } from '../types';
+import { Attack, AttackVector, RunType } from '../types';
 
 interface TaskBarProps {
   itemQuery: string;
@@ -24,6 +25,7 @@ interface TaskBarProps {
   onRunAttack: () => void;
   onRunAll: () => void;
   isRunning: boolean;
+  runType?: RunType;
 }
 
 const getVectorIcon = (vector: AttackVector) => {
@@ -73,9 +75,19 @@ export const TaskBar: React.FC<TaskBarProps> = ({
   onRunAttack,
   onRunAll,
   isRunning,
+  runType,
 }) => {
   return (
     <div className="w-full flex flex-col gap-4 p-5 bg-[#111820] border border-[#1E2A36] rounded-[12px]">
+      {runType === 'simulated' && (
+        <div className="flex items-center gap-2.5 p-2.5 rounded-[10px] bg-[#F0616D]/10 border border-[#F0616D]/30 text-[#F0616D] text-xs font-mono">
+          <Bot className="w-4 h-4 shrink-0" />
+          <span>
+            <strong>Simulated: worst case, agent fully compromised</strong> — Scripted agent executing attacker goal tool calls regardless of instructions, proving Cedar defense under total model hijack.
+          </span>
+        </div>
+      )}
+
       {/* Top Input Row: What to buy, Quantity, Budget, and Action Buttons */}
       <div className="flex flex-col lg:flex-row items-stretch lg:items-end justify-between gap-4">
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 flex-1">

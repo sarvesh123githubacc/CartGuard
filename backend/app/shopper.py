@@ -5,7 +5,7 @@ from strands import Agent, tool
 from strands.models.ollama import OllamaModel
 
 from backend.app.models import SessionState
-from backend.app.reader import run_reader_agent
+from backend.app.reader import ListingFacts, post_filter_facts, run_reader_agent
 from backend.app.tools import (
     add_to_cart as domain_add_to_cart,
     change_address as domain_change_address,
@@ -38,6 +38,7 @@ def create_shopper_tools(
     catalog_override: Optional[Dict[str, Dict[str, Any]]] = None,
     model_name: Optional[str] = None,
     host: Optional[str] = None,
+    fast_reader: bool = False,
 ) -> List[Any]:
     """Create tools bound to session and event emitter."""
 
@@ -112,8 +113,26 @@ def create_shopper_tools(
                 mode="unprotected",
             ))
 
-        # Invoke the Quarantined Reader agent on the raw listing
-        facts = run_reader_agent(raw_product, model_name=model_name, host=host)
+        if fast_reader:
+            facts = ListingFacts(
+                product_id=str(raw_product.get("id", "")),
+                title=str(raw_product.get("title", ""))[:80],
+                price_paise=int(raw_product.get("price_paise", 0)),
+                rating=float(raw_product.get("rating", 0.0)),
+                key_specs={str(k): str(v) for k, v in raw_product.get("specs", {}).items()},
+                seller_score=float(raw_product.get("seller_score", 1.0)),
+                flags=[],
+            )
+            raw_input_text = (
+                f"Title: {raw_product.get('title', '')}\n"
+                f"Description: {raw_product.get('description', '')}\n"
+                f"Reviews: {json.dumps(raw_product.get('reviews', []))}\n"
+                f"Q&A: {json.dumps(raw_product.get('qna', []))}"
+            )
+            facts = post_filter_facts(raw_input_text, facts)
+        else:
+            # Invoke the Quarantined Reader agent on the raw listing
+            facts = run_reader_agent(raw_product, model_name=model_name, host=host)
 
         # Log and emit reader facts event
         _emit("reader_facts", {"product_id": product_id, "facts": facts.model_dump()})

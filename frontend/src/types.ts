@@ -87,4 +87,5 @@ export interface StressReport {
   violations: Array<any>;
 }
 
-export type AgentStatus = 'Idle' | 'Running' | 'Hijacked' | 'Safe';
+export type AgentStatus = 'Idle' | 'Running' | 'Hijacked' | 'Safe' | 'Resisted';
+export type RunType = 'live' | 'replay' | 'simulated';

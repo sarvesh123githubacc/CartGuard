@@ -36,9 +36,10 @@ OLLAMA_HOST = os.getenv("OLLAMA_HOST", "http://localhost:11434")
 
 class RunRequest(BaseModel):
     attack_id: str
-    mode: str = "protected"  # "protected" | "unprotected" | "replay"
+    mode: str = "protected"  # "protected" | "unprotected" | "replay" | "simulated_unprotected" | "simulated_protected"
     session_id: Optional[str] = None
     replay: bool = False
+    run_type: Optional[str] = None  # "live" | "replay" | "simulated"
 
 
 class ApproveRequest(BaseModel):
@@ -66,14 +67,20 @@ def get_attacks():
 
 
 @app.get("/api/run")
-async def get_run(attack_id: str, mode: str = "protected", replay: bool = False):
+async def get_run(attack_id: str, mode: str = "protected", replay: bool = False, run_type: Optional[str] = None):
     """GET endpoint for EventSource browser compatibility."""
-    actual_mode = f"replay_{mode}" if replay and not mode.startswith("replay") else mode
+    if run_type == "simulated" or mode.startswith("simulated"):
+        actual_mode = mode if mode.startswith("simulated") else f"simulated_{mode}"
+    elif replay and not mode.startswith("replay"):
+        actual_mode = f"replay_{mode}"
+    else:
+        actual_mode = mode
 
     async def event_generator():
         async for event in run_scenario_stream(
             attack_id=attack_id,
             mode=actual_mode,
+            run_type=run_type,
         ):
             yield {
                 "event": "message",
@@ -86,13 +93,19 @@ async def get_run(attack_id: str, mode: str = "protected", replay: bool = False)
 @app.post("/api/run")
 async def post_run(req: RunRequest):
     """Run an individual scenario and stream events via SSE."""
-    actual_mode = f"replay_{req.mode}" if req.replay and not req.mode.startswith("replay") else req.mode
+    if req.run_type == "simulated" or req.mode.startswith("simulated"):
+        actual_mode = req.mode if req.mode.startswith("simulated") else f"simulated_{req.mode}"
+    elif req.replay and not req.mode.startswith("replay"):
+        actual_mode = f"replay_{req.mode}"
+    else:
+        actual_mode = req.mode
 
     async def event_generator():
         async for event in run_scenario_stream(
             attack_id=req.attack_id,
             mode=actual_mode,
             session_id=req.session_id,
+            run_type=req.run_type,
         ):
             yield {
                 "event": "message",

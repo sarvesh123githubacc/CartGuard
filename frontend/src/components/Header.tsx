@@ -1,18 +1,18 @@
-import React from 'react';
-import { Shield, Cpu, FileCode, Play, RotateCcw } from 'lucide-react';
+import { Shield, Cpu, FileCode, Play, RotateCcw, Bot } from 'lucide-react';
+import { RunType } from '../types';
 
 interface HeaderProps {
   modelName: string;
   policyCount: number;
-  isReplay: boolean;
-  onToggleReplay: () => void;
+  runType: RunType;
+  onSelectRunType: (rt: RunType) => void;
 }
 
 export const Header: React.FC<HeaderProps> = ({
   modelName,
   policyCount,
-  isReplay,
-  onToggleReplay,
+  runType,
+  onSelectRunType,
 }) => {
   return (
     <header className="w-full flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 py-4 px-6 bg-[#111820] border border-[#1E2A36] rounded-[12px] shadow-sm">
@@ -46,28 +46,47 @@ export const Header: React.FC<HeaderProps> = ({
           <span>{policyCount} Cedar Policies</span>
         </div>
 
-        {/* Live / Replay Toggle */}
-        <button
-          onClick={onToggleReplay}
-          className={`flex items-center gap-2 px-3.5 py-1.5 rounded-[12px] border text-xs font-medium transition-colors duration-200 ${
-            isReplay
-              ? 'bg-[#F5B84B]/10 border-[#F5B84B]/40 text-[#F5B84B]'
-              : 'bg-[#3DDC97]/10 border-[#3DDC97]/40 text-[#3DDC97]'
-          }`}
-          title={isReplay ? "Switch to Live Inference Mode" : "Switch to Replay Mode"}
-        >
-          {isReplay ? (
-            <>
-              <RotateCcw className="w-3.5 h-3.5" />
-              <span className="font-mono">REPLAY MODE</span>
-            </>
-          ) : (
-            <>
-              <Play className="w-3.5 h-3.5 fill-current" />
-              <span className="font-mono">LIVE MODE</span>
-            </>
-          )}
-        </button>
+        {/* 3 Run Types Selector */}
+        <div className="flex items-center rounded-[12px] bg-[#0B0F14] border border-[#1E2A36] p-0.5">
+          <button
+            onClick={() => onSelectRunType('simulated')}
+            className={`flex items-center gap-1.5 px-2.5 py-1 rounded-[10px] text-xs font-mono transition-colors ${
+              runType === 'simulated'
+                ? 'bg-[#F0616D]/20 text-[#F0616D] border border-[#F0616D]/50 font-bold'
+                : 'text-[#8B98A5] hover:text-[#E6EDF3]'
+            }`}
+            title="Simulated: worst case, agent fully compromised (scripted tool execution)"
+          >
+            <Bot className="w-3 h-3" />
+            <span>Simulated Compromised</span>
+          </button>
+
+          <button
+            onClick={() => onSelectRunType('replay')}
+            className={`flex items-center gap-1.5 px-2.5 py-1 rounded-[10px] text-xs font-mono transition-colors ${
+              runType === 'replay'
+                ? 'bg-[#F5B84B]/20 text-[#F5B84B] border border-[#F5B84B]/50 font-bold'
+                : 'text-[#8B98A5] hover:text-[#E6EDF3]'
+            }`}
+            title="Replay recorded demo dataset"
+          >
+            <RotateCcw className="w-3 h-3" />
+            <span>Replay</span>
+          </button>
+
+          <button
+            onClick={() => onSelectRunType('live')}
+            className={`flex items-center gap-1.5 px-2.5 py-1 rounded-[10px] text-xs font-mono transition-colors ${
+              runType === 'live'
+                ? 'bg-[#3DDC97]/20 text-[#3DDC97] border border-[#3DDC97]/50 font-bold'
+                : 'text-[#8B98A5] hover:text-[#E6EDF3]'
+            }`}
+            title="Live Ollama model inference"
+          >
+            <Play className="w-3 h-3 fill-current" />
+            <span>Live Model</span>
+          </button>
+        </div>
       </div>
     </header>
   );

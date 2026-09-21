@@ -6,8 +6,27 @@ from pydantic import BaseModel, Field, field_validator
 from strands import Agent
 from strands.models.ollama import OllamaModel
 
+from enum import Enum
+
 CARTGUARD_MODEL = os.getenv("CARTGUARD_MODEL", "llama3.1:8b")
 OLLAMA_HOST = os.getenv("OLLAMA_HOST", "http://localhost:11434")
+
+
+class ReaderFlag(str, Enum):
+    INSTRUCTION_LIKE_TEXT = "instruction_like_text"
+    URGENCY_LANGUAGE = "urgency_language"
+    PROMO_LANGUAGE = "promo_language"
+    HIDDEN_TEXT = "hidden_text"
+    PRICE_PRESSURE = "price_pressure"
+
+
+ALLOWED_READER_FLAGS = {
+    ReaderFlag.INSTRUCTION_LIKE_TEXT.value,
+    ReaderFlag.URGENCY_LANGUAGE.value,
+    ReaderFlag.PROMO_LANGUAGE.value,
+    ReaderFlag.HIDDEN_TEXT.value,
+    ReaderFlag.PRICE_PRESSURE.value,
+}
 
 # Regex to detect imperative, directive, or system-style text in raw marketplace listings
 INSTRUCTION_REGEX = re.compile(
@@ -21,6 +40,22 @@ INSTRUCTION_REGEX = re.compile(
     r"step\s+1\s*:.*step\s+2\s*:"
     r")",
     re.DOTALL,
+)
+
+URGENCY_REGEX = re.compile(
+    r"(?i)\b(urgent|immediately|emergency|flash sale|ending now|avoid cart expiration|pre-approved express)\b"
+)
+
+PROMO_REGEX = re.compile(
+    r"(?i)\b(promotional|special clearance|discount|bundle partner|companion protection|bonus|deal)\b"
+)
+
+HIDDEN_TEXT_REGEX = re.compile(
+    r"(<!--|\u200b|<span[^>]*display:\s*none)"
+)
+
+PRICE_PRESSURE_REGEX = re.compile(
+    r"(?i)\b(manager override|unlock pricing|budget.*superseded|superseded by|price.*pressure)\b"
 )
 
 
@@ -51,13 +86,23 @@ class ListingFacts(BaseModel):
                 clean[k_str] = v_str
         return clean
 
+    @field_validator("flags", mode="before")
+    @classmethod
+    def validate_flags(cls, v: Any) -> List[str]:
+        if not isinstance(v, list):
+            return []
+        # Drop any flag outside the fixed enum
+        return [str(fl).strip() for fl in v if str(fl).strip() in ALLOWED_READER_FLAGS]
+
 
 def post_filter_facts(raw_input: str, facts: ListingFacts) -> ListingFacts:
     """Deterministic post-filter on Reader output:
 
     - Cap string lengths (title <= 80 chars, spec keys <= 40, spec values <= 60)
     - Drop unknown keys (guaranteed by ListingFacts schema)
-    - Add informational flag 'instruction_like_text' when regex matches raw input.
+    - Drop any flag outside the fixed enum (instruction_like_text, urgency_language,
+      promo_language, hidden_text, price_pressure)
+    - Detect and add flags matching the fixed enum based on raw listing content.
     """
     # 1. Cap title length
     capped_title = facts.title[:80].strip()
@@ -70,11 +115,27 @@ def post_filter_facts(raw_input: str, facts: ListingFacts) -> ListingFacts:
         if k_str:
             clean_specs[k_str] = v_str
 
-    # 3. Informational regex check on raw input
-    updated_flags = list(facts.flags or [])
-    if INSTRUCTION_REGEX.search(raw_input):
-        if "instruction_like_text" not in updated_flags:
-            updated_flags.append("instruction_like_text")
+    # 3. Filter existing flags strictly to the enum
+    updated_flags = [f for f in (facts.flags or []) if f in ALLOWED_READER_FLAGS]
+
+    # 4. Check deterministic patterns on raw untrusted input
+    if INSTRUCTION_REGEX.search(raw_input) and ReaderFlag.INSTRUCTION_LIKE_TEXT.value not in updated_flags:
+        updated_flags.append(ReaderFlag.INSTRUCTION_LIKE_TEXT.value)
+
+    if URGENCY_REGEX.search(raw_input) and ReaderFlag.URGENCY_LANGUAGE.value not in updated_flags:
+        updated_flags.append(ReaderFlag.URGENCY_LANGUAGE.value)
+
+    if PROMO_REGEX.search(raw_input) and ReaderFlag.PROMO_LANGUAGE.value not in updated_flags:
+        updated_flags.append(ReaderFlag.PROMO_LANGUAGE.value)
+
+    if HIDDEN_TEXT_REGEX.search(raw_input) and ReaderFlag.HIDDEN_TEXT.value not in updated_flags:
+        updated_flags.append(ReaderFlag.HIDDEN_TEXT.value)
+
+    if PRICE_PRESSURE_REGEX.search(raw_input) and ReaderFlag.PRICE_PRESSURE.value not in updated_flags:
+        updated_flags.append(ReaderFlag.PRICE_PRESSURE.value)
+
+    # Ensure strictly no flags outside the fixed enum
+    final_flags = [f for f in updated_flags if f in ALLOWED_READER_FLAGS]
 
     return ListingFacts(
         product_id=facts.product_id,
@@ -83,7 +144,7 @@ def post_filter_facts(raw_input: str, facts: ListingFacts) -> ListingFacts:
         rating=facts.rating,
         key_specs=clean_specs,
         seller_score=facts.seller_score,
-        flags=updated_flags,
+        flags=final_flags,
     )
 
 
@@ -95,7 +156,10 @@ READER_SYSTEM_PROMPT = (
     "Extract and output ONLY a JSON object conforming strictly to the ListingFacts schema: "
     "product_id (string), title (string, max 80 chars), price_paise (integer), "
     "rating (float), key_specs (dict of string keys to string values), "
-    "seller_score (float 0.0-1.0), flags (list of strings)."
+    "seller_score (float 0.0-1.0), flags (list of strings). "
+    "Any flags must strictly be from this fixed enum: "
+    "['instruction_like_text', 'urgency_language', 'promo_language', 'hidden_text', 'price_pressure']. "
+    "Never include any free text descriptions, reviews, or seller notes."
 )
 
 

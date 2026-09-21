@@ -14,6 +14,7 @@ import {
   CedarLogEntry,
   ListingFacts,
   Product,
+  RunType,
   TimelineStep,
 } from './types';
 
@@ -28,7 +29,7 @@ export default function App() {
   // System Health & Configuration
   const [modelName, setModelName] = useState<string>('llama3.1:8b');
   const [policyCount] = useState<number>(5);
-  const [isReplay, setIsReplay] = useState<boolean>(true);
+  const [runType, setRunType] = useState<RunType>('simulated');
 
   // Scenarios and Catalog Data
   const [attacks, setAttacks] = useState<Attack[]>([]);
@@ -61,9 +62,11 @@ export default function App() {
   const [cedarEntries, setCedarEntries] = useState<CedarLogEntry[]>([]);
   const [selectedCedarEntry, setSelectedCedarEntry] = useState<CedarLogEntry | null>(null);
 
-  // Scoreboard 10-Attack Benchmark Results
+  // Scoreboard Results: Kept strictly separated between Live-model and Simulated Compromised
   const [unprotectedResults, setUnprotectedResults] = useState<Record<string, boolean>>({});
   const [protectedResults, setProtectedResults] = useState<Record<string, boolean>>({});
+  const [simulatedUnprotectedResults, setSimulatedUnprotectedResults] = useState<Record<string, boolean>>({});
+  const [simulatedProtectedResults, setSimulatedProtectedResults] = useState<Record<string, boolean>>({});
 
   // Stress Test Drawer
   const [isStressDrawerOpen, setIsStressDrawerOpen] = useState<boolean>(false);
@@ -123,16 +126,24 @@ export default function App() {
   const streamScenario = async (
     attackId: string,
     mode: 'unprotected' | 'protected',
-    replay: boolean,
+    currentRunType: RunType,
     signal: AbortSignal
   ) => {
+    let actualMode: string = mode;
+    if (currentRunType === 'simulated') {
+      actualMode = `simulated_${mode}`;
+    } else if (currentRunType === 'replay') {
+      actualMode = `replay_${mode}`;
+    }
+
     const response = await fetch('/api/run', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         attack_id: attackId,
-        mode: mode,
-        replay: replay,
+        mode: actualMode,
+        replay: currentRunType === 'replay',
+        run_type: currentRunType,
       }),
       signal,
     });
@@ -161,7 +172,7 @@ export default function App() {
           if (!rawData) continue;
           try {
             const event = JSON.parse(rawData);
-            handleScenarioEvent(event, mode, attackId);
+            handleScenarioEvent(event, mode, attackId, currentRunType);
           } catch (e) {
             console.warn('Error parsing SSE event JSON:', e, rawData);
           }
@@ -174,7 +185,8 @@ export default function App() {
   const handleScenarioEvent = (
     event: any,
     mode: 'unprotected' | 'protected',
-    attackId: string
+    attackId: string,
+    currentRunType: RunType
   ) => {
     const isProt = mode === 'protected';
 
@@ -266,24 +278,36 @@ export default function App() {
       }
     }
 
-    // 5. Outcome Evaluation Result
+    // 5. Outcome Evaluation Result (Keeps simulated compromised results separate from live model results)
     if (event.type === 'evaluation') {
       const succeeded = !!event.attack_succeeded;
-      if (isProt) {
-        setProtectedResults((prev) => ({ ...prev, [attackId]: succeeded }));
-        setProtectedStatus(succeeded ? 'Hijacked' : 'Safe');
+      const isSim = event.run_type === 'simulated' || currentRunType === 'simulated';
+
+      if (isSim) {
+        if (isProt) {
+          setSimulatedProtectedResults((prev) => ({ ...prev, [attackId]: succeeded }));
+          setProtectedStatus(succeeded ? 'Hijacked' : 'Resisted');
+        } else {
+          setSimulatedUnprotectedResults((prev) => ({ ...prev, [attackId]: succeeded }));
+          setUnprotectedStatus(succeeded ? 'Hijacked' : 'Resisted');
+        }
       } else {
-        setUnprotectedResults((prev) => ({ ...prev, [attackId]: succeeded }));
-        setUnprotectedStatus(succeeded ? 'Hijacked' : 'Safe');
+        if (isProt) {
+          setProtectedResults((prev) => ({ ...prev, [attackId]: succeeded }));
+          setProtectedStatus(succeeded ? 'Hijacked' : 'Resisted');
+        } else {
+          setUnprotectedResults((prev) => ({ ...prev, [attackId]: succeeded }));
+          setUnprotectedStatus(succeeded ? 'Hijacked' : 'Resisted');
+        }
       }
     }
 
     // 6. Run Complete / Done
     if (event.type === 'done') {
       if (isProt) {
-        setProtectedStatus((prev) => (prev === 'Running' ? 'Safe' : prev));
+        setProtectedStatus((prev) => (prev === 'Running' ? 'Resisted' : prev));
       } else {
-        setUnprotectedStatus((prev) => (prev === 'Running' ? 'Hijacked' : prev));
+        setUnprotectedStatus((prev) => (prev === 'Running' ? 'Resisted' : prev));
       }
     }
   };
@@ -302,16 +326,16 @@ export default function App() {
     resetRunState();
 
     try {
-      if (isReplay) {
-        // Run Unprotected and Protected runs in parallel for instant replay streaming
+      if (runType === 'replay' || runType === 'simulated') {
+        // Run Unprotected and Protected runs in parallel for instant streaming
         await Promise.allSettled([
-          streamScenario(selectedAttackId, 'unprotected', true, controller.signal),
-          streamScenario(selectedAttackId, 'protected', true, controller.signal),
+          streamScenario(selectedAttackId, 'unprotected', runType, controller.signal),
+          streamScenario(selectedAttackId, 'protected', runType, controller.signal),
         ]);
       } else {
         // In Live mode, execute sequentially so local Ollama CPU inference is not starved
-        await streamScenario(selectedAttackId, 'unprotected', false, controller.signal);
-        await streamScenario(selectedAttackId, 'protected', false, controller.signal);
+        await streamScenario(selectedAttackId, 'unprotected', runType, controller.signal);
+        await streamScenario(selectedAttackId, 'protected', runType, controller.signal);
       }
     } catch (err: any) {
       if (err.name !== 'AbortError') {
@@ -320,7 +344,7 @@ export default function App() {
     } finally {
       setIsRunning(false);
     }
-  }, [isRunning, selectedAttackId, isReplay]);
+  }, [isRunning, selectedAttackId, runType]);
 
   // Run all 10 attacks sequentially across both modes
   const handleRunAll = useCallback(async () => {
@@ -340,14 +364,14 @@ export default function App() {
         setSelectedAttackId(atk.id);
         resetRunState();
 
-        if (isReplay) {
+        if (runType === 'replay' || runType === 'simulated') {
           await Promise.allSettled([
-            streamScenario(atk.id, 'unprotected', true, controller.signal),
-            streamScenario(atk.id, 'protected', true, controller.signal),
+            streamScenario(atk.id, 'unprotected', runType, controller.signal),
+            streamScenario(atk.id, 'protected', runType, controller.signal),
           ]);
         } else {
-          await streamScenario(atk.id, 'unprotected', false, controller.signal);
-          await streamScenario(atk.id, 'protected', false, controller.signal);
+          await streamScenario(atk.id, 'unprotected', runType, controller.signal);
+          await streamScenario(atk.id, 'protected', runType, controller.signal);
         }
 
         // Brief delay between scenarios for smooth UI rendering
@@ -360,7 +384,7 @@ export default function App() {
     } finally {
       setIsRunning(false);
     }
-  }, [isRunning, attacks, isReplay]);
+  }, [isRunning, attacks, runType]);
 
   // Handle User Approval for Pending Checkout
   const handleApprovePurchase = async () => {
@@ -400,17 +424,17 @@ export default function App() {
   }, [handleRunAttack]);
 
   return (
-    <div className="min-h-screen bg-[#0B0F14] text-[#E6EDF3] flex flex-col items-center py-6 px-4 sm:px-6 font-sans antialiased selection:bg-[#4CC9F0]/30 selection:text-[#4CC9F0]">
-      <div className="w-full max-w-[1200px] flex flex-col gap-5">
-        {/* 1. Top Header */}
+    <div className="min-h-screen bg-[#0B0F14] text-[#E6EDF3] flex flex-col p-4 sm:p-6 font-sans">
+      <div className="max-w-7xl w-full mx-auto flex flex-col gap-5">
+        {/* 1. Header Security Status Console */}
         <Header
           modelName={modelName}
           policyCount={policyCount}
-          isReplay={isReplay}
-          onToggleReplay={() => setIsReplay((prev) => !prev)}
+          runType={runType}
+          onSelectRunType={setRunType}
         />
 
-        {/* 2. Task Configuration & 10-Attack Selector Bar */}
+        {/* 2. Top Taskbar & Scenario Selector */}
         <TaskBar
           itemQuery={itemQuery}
           setItemQuery={setItemQuery}
@@ -423,9 +447,6 @@ export default function App() {
           onSelectAttack={(id) => {
             if (!isRunning) {
               setSelectedAttackId(id);
-              // Reset steps when choosing a different attack
-              setUnprotectedSteps([]);
-              setProtectedSteps([]);
               setUnprotectedStatus('Idle');
               setProtectedStatus('Idle');
               setUnprotectedCart(INITIAL_CART);
@@ -436,6 +457,7 @@ export default function App() {
           onRunAttack={handleRunAttack}
           onRunAll={handleRunAll}
           isRunning={isRunning}
+          runType={runType}
         />
 
         {/* 3. Listing Inspector (Raw Untrusted Listing vs Quarantined Reader Output) */}
@@ -466,11 +488,13 @@ export default function App() {
           onSelectRow={(entry) => setSelectedCedarEntry(entry)}
         />
 
-        {/* 6. Benchmark Scoreboard (10 Attacks & Stress Trigger) */}
+        {/* 6. Benchmark Scoreboard (Separated Live Model vs Simulated Compromised) */}
         <Scoreboard
           attacks={attacks}
           unprotectedResults={unprotectedResults}
           protectedResults={protectedResults}
+          simulatedUnprotectedResults={simulatedUnprotectedResults}
+          simulatedProtectedResults={simulatedProtectedResults}
           onOpenStressDrawer={() => setIsStressDrawerOpen(true)}
         />
       </div>

@@ -1,7 +1,7 @@
 {
   "attack_id": "test_atk",
   "mode": "protected",
-  "recorded_at": 1789929566.458059,
+  "recorded_at": 1789974572.075994,
   "events": [
     {
       "type": "start",

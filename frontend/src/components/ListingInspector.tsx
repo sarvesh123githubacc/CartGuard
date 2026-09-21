@@ -169,11 +169,11 @@ export const ListingInspector: React.FC<ListingInspectorProps> = ({
             </div>
             <div className="flex items-center gap-2 pt-1">
               <span className="text-[#4CC9F0]">flags</span>:
-              {(readerFacts?.flags || ['instruction_like_text']).length === 0 ? (
+              {(!readerFacts?.flags || readerFacts.flags.length === 0) ? (
                 <span className="text-[#8B98A5]">[]</span>
               ) : (
                 <div className="flex flex-wrap gap-1">
-                  {(readerFacts?.flags || ['instruction_like_text']).map((fl, idx) => (
+                  {readerFacts.flags.map((fl, idx) => (
                     <span
                       key={idx}
                       className="px-1.5 py-0.5 text-[10px] rounded bg-[#F5B84B]/15 border border-[#F5B84B]/40 text-[#F5B84B]"
@@ -189,8 +189,9 @@ export const ListingInspector: React.FC<ListingInspectorProps> = ({
           <div className="mt-3 p-3 rounded-[12px] bg-[#0B0F14] border border-[#1E2A36] text-[11px] text-[#8B98A5] flex items-start gap-2">
             <Lock className="w-4 h-4 text-[#3DDC97] shrink-0 mt-0.5" />
             <p>
-              Free-form untrusted seller text (descriptions, reviews, Q&A) is completely discarded by the
-              zero-tool Reader agent. The Shopper agent only receives the typed JSON facts above.
+              No free text from a listing reaches the Shopper. Descriptions, reviews, Q&A, and seller comments
+              are discarded by the Quarantined Reader. The Shopper receives only schema-typed fields and
+              fixed enum flags (instruction_like_text, urgency_language, promo_language, hidden_text, price_pressure).
             </p>
           </div>
         </div>

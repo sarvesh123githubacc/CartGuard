@@ -2,7 +2,6 @@ import React from 'react';
 import {
   AlertTriangle,
   ShieldCheck,
-  CheckCircle2,
   XCircle,
   Clock,
   ShoppingCart,
@@ -67,10 +66,11 @@ const getStatusBadge = (status: AgentStatus) => {
           <XCircle className="w-3.5 h-3.5" /> HIJACKED
         </span>
       );
+    case 'Resisted':
     case 'Safe':
       return (
-        <span className="flex items-center gap-1.5 px-2.5 py-1 rounded-[12px] bg-[#3DDC97]/15 text-[#3DDC97] border border-[#3DDC97]/30 font-mono text-xs font-bold">
-          <CheckCircle2 className="w-3.5 h-3.5" /> SAFE
+        <span className="flex items-center gap-1.5 px-2.5 py-1 rounded-[12px] bg-[#151E28] text-[#8B98A5] border border-[#1E2A36] font-mono text-xs font-medium">
+          <ShieldCheck className="w-3.5 h-3.5 text-[#3DDC97]" /> RESISTED INJECTION
         </span>
       );
     case 'Idle':
@@ -102,12 +102,6 @@ export const Arena: React.FC<ArenaProps> = ({
   const isUnprotQtyDeviated = unprotQty > targetQuantity;
   const isUnprotBudgetDeviated = unprotTotal > targetBudgetRupees;
   const isUnprotAddressDeviated = unprotectedCart.ship_to !== savedAddress;
-  const isUnprotApprovalDeviated = unprotectedCart.checked_out && !unprotectedCart.user_approved;
-  const isUnprotAnyDeviated =
-    isUnprotQtyDeviated ||
-    isUnprotBudgetDeviated ||
-    isUnprotAddressDeviated ||
-    isUnprotApprovalDeviated;
 
   // Check deviations for protected cart
   const protQty = protectedCart.total_quantity ?? protectedCart.items.reduce((s, i) => s + i.quantity, 0);
@@ -177,10 +171,10 @@ export const Arena: React.FC<ArenaProps> = ({
         {/* Cart Tile */}
         <div
           className={`p-4 rounded-[12px] border transition-colors duration-200 ${
-            unprotectedSteps.length > 0 && isUnprotAnyDeviated
+            unprotectedSteps.length > 0 && unprotectedStatus === 'Hijacked'
               ? 'bg-[#F0616D]/10 border-[#F0616D]/40 text-[#F0616D]'
               : unprotectedSteps.length > 0
-              ? 'bg-[#3DDC97]/10 border-[#3DDC97]/40 text-[#3DDC97]'
+              ? 'bg-[#151E28] border-[#1E2A36] text-[#8B98A5]'
               : 'bg-[#151E28] border-[#1E2A36] text-[#8B98A5]'
           }`}
         >
@@ -190,7 +184,7 @@ export const Arena: React.FC<ArenaProps> = ({
             </span>
             {unprotectedSteps.length > 0 && (
               <span className="text-[11px] font-mono font-bold">
-                {isUnprotAnyDeviated ? '⚠ INTENT VIOLATED' : '✓ MATCHES INTENT'}
+                {unprotectedStatus === 'Hijacked' ? '⚠ HIJACKED' : '✓ RESISTED INJECTION'}
               </span>
             )}
           </div>
@@ -357,7 +351,7 @@ export const Arena: React.FC<ArenaProps> = ({
           </div>
 
           {/* Approve Purchase Button */}
-          {(!protectedCart.user_approved || isAwaitingApproval) && (
+          {(isAwaitingApproval || (protectedSteps.length > 0 && protectedCart.items.length > 0 && !protectedCart.checked_out)) && (
             <div className="mt-3 pt-2 border-t border-[#1E2A36]">
               <button
                 onClick={onApprovePurchase}

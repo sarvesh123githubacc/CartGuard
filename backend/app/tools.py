@@ -170,10 +170,10 @@ def get_listing_facts(product_id: str, session: SessionState) -> Dict[str, Any]:
     # Return only typed facts, strictly removing untrusted free text fields
     return {
         "id": product["id"],
-        "title": product["title"],
+        "product_id": product["id"],
+        "title": product["title"][:80],
         "price_paise": product["price_paise"],
         "rating": product["rating"],
-        "seller": product["seller"],
         "seller_score": product["seller_score"],
         "specs": product.get("specs", {}),
     }
